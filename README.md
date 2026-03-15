@@ -2,23 +2,7 @@
 
 A TUI that groups your terminal tabs by git project across Terminal.app and Ghostty.
 
-```
- TabGate                                    3 projects · 6 sessions
-
-  TabGate  ~/Projects/TabGate
-    ❯ main                                                nvim main.go
-      feature/tui-layout  [worktree]                      claude code
-      main                                                go test ./...
-
-  api-server  ~/Projects/api-server
-      fix/auth-bug                                        claude code
-      main                                            docker compose up
-
-  Other
-      ~/Downloads                                         zsh (idle)
-
-  ↑↓/jk navigate  enter switch  n new  r rename  d close  q quit
-```
+![TabGate demo](demo.gif)
 
 ## Features
 

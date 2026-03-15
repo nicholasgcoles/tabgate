@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -12,13 +13,22 @@ import (
 )
 
 func main() {
-	adapters := adapter.DetectAdapters()
-	if len(adapters) == 0 {
-		fmt.Fprintln(os.Stderr, "No supported terminal emulators detected.")
-		os.Exit(1)
-	}
+	demo := flag.Bool("demo", false, "Run with fake demo data (no real terminal required)")
+	flag.Parse()
 
-	e := enricher.NewTabEnricher()
+	var adapters []adapter.TerminalAdapter
+	var e *enricher.TabEnricher
+
+	if *demo {
+		adapters = []adapter.TerminalAdapter{adapter.NewDemoAdapter()}
+	} else {
+		adapters = adapter.DetectAdapters()
+		if len(adapters) == 0 {
+			fmt.Fprintln(os.Stderr, "No supported terminal emulators detected.")
+			os.Exit(1)
+		}
+		e = enricher.NewTabEnricher()
+	}
 
 	// Collect initial tabs for the first render.
 	var tabs []adapter.Tab
@@ -31,7 +41,9 @@ func main() {
 		}
 		tabs = append(tabs, t...)
 	}
-	tabs = e.Enrich(tabs)
+	if e != nil {
+		tabs = e.Enrich(tabs)
+	}
 
 	pl := poller.NewPoller(adapters, e)
 	m := tui.NewModel(tabs, pl, initErrors, adapters...)

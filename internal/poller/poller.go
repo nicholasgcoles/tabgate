@@ -44,7 +44,9 @@ func (p *Poller) Poll() tea.Cmd {
 			}
 			allTabs = append(allTabs, tabs...)
 		}
-		allTabs = p.enricher.Enrich(allTabs)
+		if p.enricher != nil {
+			allTabs = p.enricher.Enrich(allTabs)
+		}
 		return TabsUpdatedMsg{Tabs: allTabs, Errors: errs}
 	}
 }
