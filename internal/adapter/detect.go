@@ -1,21 +1,32 @@
 package adapter
 
-import "os/exec"
+import (
+	"fmt"
+
+	"github.com/nic/tabgate/internal/applescript"
+)
+
+// isAppRunning checks if a macOS application is running via System Events.
+// This is more reliable than pgrep, which cannot see system-bundled apps
+// like Terminal.app under /System/Applications/.
+func isAppRunning(appName string) bool {
+	script := fmt.Sprintf(
+		`tell application "System Events" to return (name of every process whose name is "%s") contains "%s"`,
+		appName, appName,
+	)
+	out, err := applescript.Run(script)
+	return err == nil && out == "true"
+}
 
 // DetectAdapters returns adapters for all currently running terminal emulators.
-// Uses `pgrep` to check if each supported terminal is running.
 func DetectAdapters() []TerminalAdapter {
 	var adapters []TerminalAdapter
 
-	// Check if Terminal.app is running.
-	// Use -f to match against the full process path — pgrep -x "Terminal"
-	// doesn't work on macOS because the process name doesn't match exactly.
-	if err := exec.Command("pgrep", "-f", "Terminal.app").Run(); err == nil {
+	if isAppRunning("Terminal") {
 		adapters = append(adapters, NewTerminalAppAdapter())
 	}
 
-	// Check if Ghostty is running.
-	if err := exec.Command("pgrep", "-x", "ghostty").Run(); err == nil {
+	if isAppRunning("ghostty") {
 		adapters = append(adapters, NewGhosttyAdapter())
 	}
 

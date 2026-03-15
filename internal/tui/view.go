@@ -36,6 +36,9 @@ var (
 	worktreeStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("214"))
 
+	tabgateStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("241"))
+
 	commandStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("243"))
 
@@ -47,6 +50,9 @@ var (
 			Bold(true).
 			Foreground(lipgloss.Color("9")).
 			Padding(0, 1)
+
+	warningStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("208"))
 )
 
 func renderView(m Model) string {
@@ -66,8 +72,16 @@ func renderView(m Model) string {
 	b.WriteString("\n")
 
 	if totalTabs == 0 {
-		b.WriteString("\n  No terminal sessions found.\n\n")
-		b.WriteString("  Make sure Terminal.app is running with at least one tab open.\n")
+		if len(m.adapterErrors) > 0 {
+			b.WriteString("\n  No terminal sessions found. Adapter errors:\n\n")
+			for _, err := range m.adapterErrors {
+				b.WriteString(warningStyle.Render("  " + err.Error()) + "\n")
+			}
+			b.WriteString("\n  Check System Settings > Privacy & Security > Automation\n")
+		} else {
+			b.WriteString("\n  No terminal sessions found.\n\n")
+			b.WriteString("  Make sure Terminal.app is running with at least one tab open.\n")
+		}
 		b.WriteString("  TabGate will auto-refresh when tabs are detected.\n")
 	} else {
 		flatIdx := 0
@@ -108,13 +122,19 @@ func renderView(m Model) string {
 					wt = worktreeStyle.Render("  [worktree]")
 				}
 
-				// Running command.
+				// TabGate badge.
+			tg := ""
+			if tab.IsSelf {
+				tg = tabgateStyle.Render("  [TabGate]")
+			}
+
+			// Running command.
 				cmd := ""
 				if tab.RunningCommand != "" {
 					cmd = commandStyle.Render(tab.RunningCommand)
 				}
 
-				left := fmt.Sprintf("  %s%s%s", cursor, style.Render(label), wt)
+				left := fmt.Sprintf("  %s%s%s%s", cursor, style.Render(label), wt, tg)
 				right := cmd
 
 				pad := m.width - lipgloss.Width(left) - lipgloss.Width(right) - 2
@@ -124,6 +144,17 @@ func renderView(m Model) string {
 				b.WriteString(left + strings.Repeat(" ", pad) + right + "\n")
 			}
 		}
+	}
+
+	// Adapter warnings (when some adapters failed but we still have tabs from others).
+	if totalTabs > 0 && len(m.adapterErrors) > 0 {
+		msgs := make([]string, len(m.adapterErrors))
+		for i, err := range m.adapterErrors {
+			msgs[i] = err.Error()
+		}
+		b.WriteString("\n")
+		b.WriteString(warningStyle.Render("  ⚠ Some adapters failed: " + strings.Join(msgs, "; ")))
+		b.WriteString("\n")
 	}
 
 	// Status / confirmation / rename input.

@@ -22,6 +22,8 @@ type TerminalAppAdapter struct {
 	ownTTY string
 }
 
+func (a *TerminalAppAdapter) Name() string { return "Terminal.app" }
+
 // NewTerminalAppAdapter creates an adapter that talks to Terminal.app.
 // It detects the current process's TTY so it can exclude its own tab from
 // listings. If TTY detection fails the adapter still works — it just won't
@@ -50,7 +52,7 @@ end tell
 
 // ListTabs enumerates all open Terminal.app tabs, resolves each tab's working
 // directory, and returns Tab structs. The tab running TabGate itself is
-// excluded from the results.
+// included with IsSelf set to true.
 func (a *TerminalAppAdapter) ListTabs() ([]Tab, error) {
 	out, err := applescript.Run(listTabsScript)
 	if err != nil {
@@ -63,17 +65,13 @@ func (a *TerminalAppAdapter) ListTabs() ([]Tab, error) {
 	raws := parseListTabsOutput(out)
 	var tabs []Tab
 	for _, r := range raws {
-		// Skip our own tab.
-		if a.ownTTY != "" && r.TTY == a.ownTTY {
-			continue
-		}
-
 		dir := cwdForTTY(r.TTY)
 
 		tabs = append(tabs, Tab{
 			ID:           r.TTY,
 			WindowID:     r.WindowID,
 			Directory:    dir,
+			IsSelf:       a.ownTTY != "" && r.TTY == a.ownTTY,
 			TerminalType: "terminal.app",
 		})
 	}

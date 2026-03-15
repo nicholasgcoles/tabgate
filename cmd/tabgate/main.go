@@ -22,9 +22,11 @@ func main() {
 
 	// Collect initial tabs for the first render.
 	var tabs []adapter.Tab
+	var initErrors []error
 	for _, a := range adapters {
 		t, err := a.ListTabs()
 		if err != nil {
+			initErrors = append(initErrors, fmt.Errorf("%s: %w", a.Name(), err))
 			continue
 		}
 		tabs = append(tabs, t...)
@@ -32,7 +34,7 @@ func main() {
 	tabs = e.Enrich(tabs)
 
 	pl := poller.NewPoller(adapters, e)
-	m := tui.NewModel(tabs, pl, adapters...)
+	m := tui.NewModel(tabs, pl, initErrors, adapters...)
 	p := tea.NewProgram(m, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)

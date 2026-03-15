@@ -19,6 +19,8 @@ type ghosttyRawTab struct {
 // GhosttyAdapter implements TerminalAdapter for the Ghostty terminal emulator.
 type GhosttyAdapter struct{}
 
+func (a *GhosttyAdapter) Name() string { return "Ghostty" }
+
 // NewGhosttyAdapter creates an adapter that talks to Ghostty via AppleScript.
 func NewGhosttyAdapter() *GhosttyAdapter {
 	return &GhosttyAdapter{}

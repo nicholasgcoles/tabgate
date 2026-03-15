@@ -50,7 +50,7 @@ func TestGroupByProjectEmpty(t *testing.T) {
 }
 
 func TestCursorNavigation(t *testing.T) {
-	m := NewModel(testTabs(), nil)
+	m := NewModel(testTabs(), nil, nil)
 	total := TotalTabs(m.projects)
 
 	if m.cursor != 0 {
@@ -77,7 +77,7 @@ func TestCursorNavigation(t *testing.T) {
 }
 
 func TestQuit(t *testing.T) {
-	m := NewModel(testTabs(), nil)
+	m := NewModel(testTabs(), nil, nil)
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
 	if cmd == nil {
 		t.Error("expected quit command")
@@ -118,7 +118,7 @@ func TestFlatPos(t *testing.T) {
 }
 
 func TestViewRenders(t *testing.T) {
-	m := NewModel(testTabs(), nil)
+	m := NewModel(testTabs(), nil, nil)
 	v := m.View()
 	if v == "" {
 		t.Error("expected non-empty view")
@@ -126,7 +126,7 @@ func TestViewRenders(t *testing.T) {
 }
 
 func TestConfirmCloseToggle(t *testing.T) {
-	m := NewModel(testTabs(), nil)
+	m := NewModel(testTabs(), nil, nil)
 
 	// Press 'd' to enter confirmation mode.
 	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
@@ -152,7 +152,7 @@ func TestConfirmCloseToggle(t *testing.T) {
 }
 
 func TestRenameMode(t *testing.T) {
-	m := NewModel(testTabs(), nil)
+	m := NewModel(testTabs(), nil, nil)
 
 	// Press 'r' to enter rename mode.
 	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'r'}})

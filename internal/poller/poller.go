@@ -1,6 +1,7 @@
 package poller
 
 import (
+	"fmt"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -10,7 +11,8 @@ import (
 
 // TabsUpdatedMsg is sent to the TUI when new tab data is available.
 type TabsUpdatedMsg struct {
-	Tabs []adapter.Tab
+	Tabs   []adapter.Tab
+	Errors []error
 }
 
 // Poller handles periodic tab discovery and enrichment.
@@ -33,14 +35,16 @@ func (p *Poller) Poll() tea.Cmd {
 	return func() tea.Msg {
 		time.Sleep(2 * time.Second)
 		var allTabs []adapter.Tab
+		var errs []error
 		for _, a := range p.adapters {
 			tabs, err := a.ListTabs()
 			if err != nil {
+				errs = append(errs, fmt.Errorf("%s: %w", a.Name(), err))
 				continue
 			}
 			allTabs = append(allTabs, tabs...)
 		}
 		allTabs = p.enricher.Enrich(allTabs)
-		return TabsUpdatedMsg{Tabs: allTabs}
+		return TabsUpdatedMsg{Tabs: allTabs, Errors: errs}
 	}
 }

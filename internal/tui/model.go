@@ -29,23 +29,25 @@ type Model struct {
 	confirmClose  bool
 	renaming      bool
 	renameInput   textinput.Model
-	statusMsg     string
+	statusMsg      string
+	adapterErrors  []error
 }
 
 // NewModel creates a new TUI model with the given tabs and optional poller.
-func NewModel(tabs []adapter.Tab, p *poller.Poller, adapters ...adapter.TerminalAdapter) Model {
+func NewModel(tabs []adapter.Tab, p *poller.Poller, errors []error, adapters ...adapter.TerminalAdapter) Model {
 	projects := GroupByProject(tabs)
 	ti := textinput.New()
 	ti.Placeholder = "new name"
 	ti.CharLimit = 64
 	return Model{
-		projects:    projects,
-		tabs:        tabs,
-		adapters:    adapters,
-		width:       80,
-		height:      24,
-		poller:      p,
-		renameInput: ti,
+		projects:      projects,
+		tabs:          tabs,
+		adapters:      adapters,
+		width:         80,
+		height:        24,
+		poller:        p,
+		renameInput:   ti,
+		adapterErrors: errors,
 	}
 }
 
@@ -77,6 +79,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case poller.TabsUpdatedMsg:
 		m.tabs = msg.Tabs
+		m.adapterErrors = msg.Errors
 		m.projects = GroupByProject(m.tabs)
 
 		// Preserve cursor position by finding the previously selected tab.
@@ -183,8 +186,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			pi, ti := FlatIndex(m.projects, m.cursor)
 			if pi >= 0 && ti >= 0 {
 				tab := m.projects[pi].Tabs[ti]
-				m.quitting = true
-				return m, tea.Batch(m.switchToTab(tab.ID), tea.Quit)
+				return m, m.switchToTab(tab.ID)
 			}
 		case key.Matches(msg, keys.New):
 			pi, _ := FlatIndex(m.projects, m.cursor)
@@ -240,7 +242,7 @@ func (m Model) switchToTab(tabID string) tea.Cmd {
 	}
 	return func() tea.Msg {
 		err := a.SwitchTo(tabID)
-		return actionDoneMsg{err: err}
+		return actionDoneMsg{statusMsg: "Switched", err: err}
 	}
 }
 

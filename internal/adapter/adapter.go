@@ -9,12 +9,15 @@ type Tab struct {
 	RepoName       string // derived from repo root directory name
 	Branch         string // current git branch
 	IsWorktree     bool
+	IsSelf         bool   // true when this tab is running TabGate
 	RunningCommand string // foreground process name
 	TerminalType   string // "terminal.app" or "ghostty"
 }
 
 // TerminalAdapter is the interface each terminal emulator implements.
 type TerminalAdapter interface {
+	// Name returns the human-readable name of this adapter (e.g. "Terminal.app").
+	Name() string
 	// ListTabs returns raw tab data: ID, WindowID, Directory, TerminalType.
 	// Git and process enrichment is handled separately by the TabEnricher.
 	ListTabs() ([]Tab, error)

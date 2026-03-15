@@ -18,6 +18,7 @@ func (m *mockAdapter) ListTabs() ([]adapter.Tab, error) {
 	return m.tabs, m.err
 }
 
+func (m *mockAdapter) Name() string                       { return "mock" }
 func (m *mockAdapter) SwitchTo(tabID string) error       { return nil }
 func (m *mockAdapter) Close(tabID string) error           { return nil }
 func (m *mockAdapter) Create(directory string) error       { return nil }
@@ -77,6 +78,10 @@ func TestPollSkipsFailingAdapter(t *testing.T) {
 
 	if updMsg.Tabs[0].ID != "good1" {
 		t.Errorf("expected tab ID 'good1', got %q", updMsg.Tabs[0].ID)
+	}
+
+	if len(updMsg.Errors) != 1 {
+		t.Fatalf("expected 1 error, got %d", len(updMsg.Errors))
 	}
 }
 
